@@ -35,12 +35,14 @@ def get_user(request: Request) -> Response:
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def create_user(request: Request) -> Response:
+    user = User()
 
-    usuario = request.data.get('usuario')
-    nome = request.data.get('nome')
-    sobrenome = request.data.get('sobrenome')
-    email = request.data.get('email')
-    senha = request.data.get('senha')
+    usuario = escape(request.data.get('usuario'))
+    nome = escape(request.data.get('nome'))
+    sobrenome = escape(request.data.get('sobrenome'))
+    email = escape(request.data.get('email'))
+    senha = escape(request.data.get('senha'))
+
 
     if not 'usuario' in request.data:
         return Response({"msg": "Favor informar um nome de usuario"}, status=status.HTTP_400_BAD_REQUEST)
@@ -54,13 +56,18 @@ def create_user(request: Request) -> Response:
     if not 'senha' in request.data:
         return Response({"msg": "Favor informar uma senha"}, status=status.HTTP_400_BAD_REQUEST)
 
-    User.objects.create(
-        username=usuario,
-        first_name=nome,
-        last_name=sobrenome,
-        email=email,
-        password=senha
-    )
+    user.username = usuario
+    user.first_name = nome
+    user.last_name = sobrenome
+    user.email = email
+    user.set_password(senha)
+    user.save()
 
     return Response({"msg": "Usuario cadastrado com sucesso!"}, status=status.HTTP_201_CREATED)
 
+
+@api_view(['DELETE'])
+@permission_classes([AllowAny])
+def delete_user(request: Request) -> Response:
+    User.objects.filter(id=request.query_params.get('user_id')).delete()
+    return Response({"msg": "Usuario apagado com sucesso!"}, status=status.HTTP_200_OK)
